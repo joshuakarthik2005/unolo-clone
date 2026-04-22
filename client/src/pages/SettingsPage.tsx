@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
-import { Building, MapPin, Shield, Check, Plus, Trash2 } from 'lucide-react';
+import { Building, MapPin, Shield, Plus, Trash2 } from 'lucide-react';
 
 export default function SettingsPage() {
   const { user } = useAuth();

@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useAuth } from '../context/AuthContext';
 import { io, Socket } from 'socket.io-client';
 import api from '../lib/api';
 import type { LiveEmployee } from '../types';

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import api from '../lib/api';
 import type { Task } from '../types';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
@@ -16,7 +16,6 @@ L.Marker.prototype.options.icon = DefaultIcon;
 
 export default function TaskDetail() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const { user } = useAuth();
   
   const [task, setTask] = useState<Task | null>(null);
@@ -71,7 +70,7 @@ export default function TaskDetail() {
           setProcessing(false);
         }
       },
-      (geoErr) => {
+      () => {
         setError("Location access required to begin assignment.");
         setProcessing(false);
       }

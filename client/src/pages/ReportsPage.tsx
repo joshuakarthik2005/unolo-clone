@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../lib/api';
-import { Download, FileText, AlertTriangle } from 'lucide-react';
+import { Download, FileText } from 'lucide-react';
 
 export default function ReportsPage() {
   const [employees, setEmployees] = useState<any[]>([]);

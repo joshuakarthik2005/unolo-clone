@@ -61,7 +61,7 @@ export default function AttendanceDashboard() {
           setError(err.response?.data?.message || `Failed to punch ${type}.`);
         }
       },
-      (geoErr) => {
+      () => {
         setError(`Location access denied. Please allow location to punch ${type}.`);
       }
     );

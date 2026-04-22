@@ -4,13 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import {
   Users,
   MapPin,
-  Clock,
   Briefcase,
   TrendingUp,
   Activity,
   CheckCircle,
-  FileText,
-  AlertTriangle
+  FileText
 } from 'lucide-react';
 import { 
   LineChart, Line, 
@@ -161,7 +159,7 @@ export default function DashboardHome() {
                       <YAxis stroke="var(--color-text-dim)" fontSize={11} allowDecimals={false} />
                       <Tooltip cursor={{fill: 'var(--color-border-light)', opacity: 0.4}} contentStyle={{ backgroundColor: 'var(--color-bg-elevated)', borderColor: 'var(--color-border)', borderRadius: '8px', color: 'var(--color-text)' }} />
                       <Bar dataKey="value" radius={[4,4,0,0]}>
-                        {taskData?.chartData?.map((entry: any, index: number) => (
+                        {taskData?.chartData?.map((_entry: any, index: number) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Bar>
@@ -180,7 +178,7 @@ export default function DashboardHome() {
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie data={expenseData?.chartData} innerRadius={40} outerRadius={70} paddingAngle={5} dataKey="value" stroke="none">
-                          {expenseData?.chartData.map((entry: any, index: number) => (
+                          {expenseData?.chartData.map((_entry: any, index: number) => (
                             <Cell key={`cell-${index}`} fill={COLORS[(index+2) % COLORS.length]} />
                           ))}
                         </Pie>
