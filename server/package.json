@@ -6,7 +6,8 @@
   "main": "src/index.js",
   "scripts": {
     "dev": "nodemon --exec tsx src/index.js",
-    "start": "tsx src/index.js",
+    "build": "npx prisma generate",
+    "start": "node --import tsx src/index.js",
     "db:generate": "npx prisma generate",
     "db:push": "npx prisma db push",
     "db:migrate": "npx prisma migrate dev",
