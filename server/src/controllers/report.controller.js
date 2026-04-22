@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from "../lib/prisma.js";
 
 // GET /api/reports/attendance-summary
 // Returns today's snapshot and a 30-day trend for the Line Chart
