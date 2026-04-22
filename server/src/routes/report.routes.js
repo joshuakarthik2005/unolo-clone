@@ -1,5 +1,5 @@
 import express from 'express';
-import { protect, authorize } from '../middleware/auth.middleware.js';
+import { authenticateToken, authorizeRole } from '../middleware/auth.middleware.js';
 import { 
   getAttendanceSummary, 
   getTaskPerformance, 
@@ -10,8 +10,8 @@ import {
 const router = express.Router();
 
 // Only ADMIN and MANAGER should access reports
-router.use(protect);
-router.use(authorize('ADMIN', 'MANAGER'));
+router.use(authenticateToken);
+router.use(authorizeRole('ADMIN', 'MANAGER'));
 
 router.get('/attendance-summary', getAttendanceSummary);
 router.get('/task-performance', getTaskPerformance);
