@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: unolo_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: unolo_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  server:
+    build:
+      context: ./server
+    container_name: unolo_server
+    depends_on:
+      - postgres
+    environment:
+      - DATABASE_URL=postgresql://postgres:password123@postgres:5432/unolo_db
+      - JWT_SECRET=supersecretjwtkey_production
+      - PORT=5000
+      - CLIENT_URL=http://localhost:5173
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./client
+    container_name: unolo_client
+    depends_on:
+      - server
+    environment:
+      - VITE_API_URL=http://localhost:5000
+    ports:
+      - "5173:80"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

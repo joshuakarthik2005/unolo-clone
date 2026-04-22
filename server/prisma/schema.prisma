@@ -1,0 +1,361 @@
+// Prisma schema for Unolo Clone — Field Force Management
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  FIELD_EMPLOYEE
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum AttendanceStatus {
+  PRESENT
+  LATE
+  HALF_DAY
+  ABSENT
+  ON_LEAVE
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  DELAYED
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ExpenseType {
+  FUEL
+  FOOD
+  OTHER
+}
+
+model User {
+  id            String     @id @default(uuid())
+  name          String
+  email         String     @unique
+  password      String
+  role          Role       @default(FIELD_EMPLOYEE)
+  status        UserStatus @default(ACTIVE)
+  phone         String?
+  profilePhoto  String?    @map("profile_photo")
+  employeeCode  String?    @map("employee_code")
+  joiningDate   DateTime?  @map("joining_date")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  organization  Organization? @relation("AdminOrg")
+  orgMembership Organization? @relation("OrgMembers", fields: [orgId], references: [id])
+  orgId         String?       @map("org_id")
+  
+  department    Department?   @relation(fields: [departmentId], references: [id])
+  departmentId  String?       @map("department_id")
+
+  site          Site?         @relation(fields: [siteId], references: [id])
+  siteId        String?       @map("site_id")
+
+  manager       User?         @relation("UserManager", fields: [managerId], references: [id])
+  managerId     String?       @map("manager_id")
+  subordinates  User[]        @relation("UserManager")
+
+  refreshTokens RefreshToken[]
+  locationLogs  LocationLog[]
+  attendances   AttendanceRecord[]
+  leaveRequests LeaveRequest[]
+  regularizations RegularizationRequest[]
+
+  assignedTasks Task[]       @relation("EmployeeTasks")
+  createdTasks  Task[]       @relation("ManagerTasks")
+
+  expenseClaims ExpenseClaim[]
+
+  @@map("users")
+}
+
+model Department {
+  id        String       @id @default(uuid())
+  name      String
+  org       Organization @relation(fields: [orgId], references: [id])
+  orgId     String       @map("org_id")
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  employees User[]
+
+  @@map("departments")
+}
+
+model Organization {
+  id          String       @id @default(uuid())
+  name        String
+  admin       User         @relation("AdminOrg", fields: [adminId], references: [id])
+  adminId     String       @unique @map("admin_id")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  members     User[]       @relation("OrgMembers")
+  shifts      Shift[]
+  departments Department[]
+  sites       Site[]
+  leaveTypes  LeaveType[]
+  clients     Client[]
+  tasks       Task[]
+  expenseClaims ExpenseClaim[]
+  vehicleRates  VehicleRate[]
+
+  @@map("organizations")
+}
+
+model Shift {
+  id        String       @id @default(uuid())
+  name      String
+  startTime String       @map("start_time")
+  endTime   String       @map("end_time")
+  org       Organization @relation(fields: [orgId], references: [id])
+  orgId     String       @map("org_id")
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  @@map("shifts")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("refresh_tokens")
+}
+
+model LocationLog {
+  id           String   @id @default(uuid())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String   @map("user_id")
+  lat          Float
+  lng          Float
+  accuracy     Float?
+  batteryLevel Int?     @map("battery_level")
+  timestamp    DateTime @default(now())
+
+  @@index([userId, timestamp])
+  @@map("location_logs")
+}
+
+model Site {
+  id        String       @id @default(uuid())
+  name      String
+  org       Organization @relation(fields: [orgId], references: [id])
+  orgId     String       @map("org_id")
+  lat       Float
+  lng       Float
+  radius    Int          @default(100) // in meters
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  employees User[]
+
+  @@map("sites")
+}
+
+model AttendanceRecord {
+  id           String           @id @default(uuid())
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String           @map("user_id")
+  date         String           // YYYY-MM-DD
+  punchInTime  DateTime         @map("punch_in_time")
+  punchInLat   Float            @map("punch_in_lat")
+  punchInLng   Float            @map("punch_in_lng")
+  punchOutTime DateTime?        @map("punch_out_time")
+  punchOutLat  Float?           @map("punch_out_lat")
+  punchOutLng  Float?           @map("punch_out_lng")
+  status       AttendanceStatus
+  totalHours   Float?           @map("total_hours")
+  selfieUrl    String?          @map("selfie_url")
+
+  regularization RegularizationRequest?
+
+  @@unique([userId, date])
+  @@map("attendance_records")
+}
+
+model LeaveType {
+  id          String         @id @default(uuid())
+  name        String
+  daysAnnually Int           @map("days_annually")
+  org         Organization   @relation(fields: [orgId], references: [id])
+  orgId       String         @map("org_id")
+
+  requests    LeaveRequest[]
+
+  @@map("leave_types")
+}
+
+model LeaveRequest {
+  id          String        @id @default(uuid())
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String        @map("user_id")
+  leaveType   LeaveType     @relation(fields: [leaveTypeId], references: [id])
+  leaveTypeId String        @map("leave_type_id")
+  startDate   DateTime      @map("start_date")
+  endDate     DateTime      @map("end_date")
+  reason      String
+  status      RequestStatus @default(PENDING)
+  approverId  String?       @map("approver_id")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  @@map("leave_requests")
+}
+
+model RegularizationRequest {
+  id                String           @id @default(uuid())
+  attendance        AttendanceRecord @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+  attendanceId      String           @unique @map("attendance_id")
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            String           @map("user_id")
+  correctedPunchIn  DateTime?        @map("corrected_punch_in")
+  correctedPunchOut DateTime?        @map("corrected_punch_out")
+  reason            String
+  status            RequestStatus    @default(PENDING)
+  approverId        String?          @map("approver_id")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+
+  @@map("regularization_requests")
+}
+
+model Client {
+  id            String       @id @default(uuid())
+  org           Organization @relation(fields: [orgId], references: [id])
+  orgId         String       @map("org_id")
+  name          String
+  address       String
+  lat           Float
+  lng           Float
+  contactPerson String?      @map("contact_person")
+  phone         String?
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  tasks         Task[]
+
+  @@map("clients")
+}
+
+model Task {
+  id            String       @id @default(uuid())
+  title         String
+  org           Organization @relation(fields: [orgId], references: [id])
+  orgId         String       @map("org_id")
+  
+  assignedTo    User         @relation("EmployeeTasks", fields: [assignedToId], references: [id])
+  assignedToId  String       @map("assigned_to_id")
+  
+  assignedBy    User         @relation("ManagerTasks", fields: [assignedById], references: [id])
+  assignedById  String       @map("assigned_by_id")
+
+  client        Client       @relation(fields: [clientId], references: [id])
+  clientId      String       @map("client_id")
+
+  status        TaskStatus   @default(PENDING)
+  priority      Priority     @default(MEDIUM)
+
+  scheduledDate DateTime     @map("scheduled_date")
+  startTime     DateTime?    @map("start_time")
+  endTime       DateTime?    @map("end_time")
+  
+  notes         String?
+  geoRadius     Int          @default(100) @map("geo_radius")
+
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  photos        TaskPhoto[]
+  forms         TaskForm[]
+
+  @@map("tasks")
+}
+
+model TaskPhoto {
+  id        String   @id @default(uuid())
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId    String   @map("task_id")
+  photoUrl  String   @map("photo_url")
+  timestamp DateTime @default(now())
+
+  @@map("task_photos")
+}
+
+model TaskForm {
+  id        String   @id @default(uuid())
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId    String   @map("task_id")
+  formData  Json     @map("form_data")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("task_forms")
+}
+
+model ExpenseClaim {
+  id              String        @id @default(uuid())
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String        @map("user_id")
+  org             Organization  @relation(fields: [orgId], references: [id])
+  orgId           String        @map("org_id")
+  date            String        // YYYY-MM-DD
+  type            ExpenseType
+  amount          Float
+  claimedDistance Float?        @map("claimed_distance")
+  actualDistance  Float?        @map("actual_distance")
+  billUrl         String?       @map("bill_url")
+  status          RequestStatus @default(PENDING)
+  managerNote     String?       @map("manager_note")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  @@map("expense_claims")
+}
+
+model VehicleRate {
+  id          String       @id @default(uuid())
+  org         Organization @relation(fields: [orgId], references: [id])
+  orgId       String       @map("org_id")
+  vehicleType String       @map("vehicle_type")
+  perKmRate   Float        @map("per_km_rate")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  @@unique([orgId, vehicleType])
+  @@map("vehicle_rates")
+}
