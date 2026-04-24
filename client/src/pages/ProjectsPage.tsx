@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
-import type { Project, Client, ProjectMember } from '../types';
+import type { Project, Client } from '../types';
 import { Folder, Building, FileText, Plus, Share2, Lock, Globe, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
