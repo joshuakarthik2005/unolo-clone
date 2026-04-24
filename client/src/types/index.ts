@@ -94,6 +94,7 @@ export interface Project {
   description?: string;
   clientId?: string;
   client?: Client;
+  users?: { id: string; name: string; profilePhoto?: string }[];
   status: 'ACTIVE' | 'COMPLETED' | 'ON_HOLD';
   createdAt: string;
   updatedAt: string;

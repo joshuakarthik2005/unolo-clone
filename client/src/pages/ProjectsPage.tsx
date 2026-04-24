@@ -8,21 +8,24 @@ export default function ProjectsPage() {
   const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '', description: '', clientId: ''
+  const [formData, setFormData] = useState<{name: string; description: string; clientId: string; userIds: string[]}>({
+    name: '', description: '', clientId: '', userIds: []
   });
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [pRes, cRes] = await Promise.all([
+      const [pRes, cRes, uRes] = await Promise.all([
         api.get('/projects'),
-        api.get('/clients')
+        api.get('/clients'),
+        api.get('/users')
       ]);
       setProjects(pRes.data.data);
       setClients(cRes.data.data);
+      setUsers(uRes.data.data);
     } catch (err) { 
       console.error(err);
     }
@@ -39,7 +42,7 @@ export default function ProjectsPage() {
       await api.post('/projects', formData);
       setShowModal(false);
       fetchData();
-      setFormData({ name: '', description: '', clientId: '' });
+      setFormData({ name: '', description: '', clientId: '', userIds: [] });
     } catch (err) {
       alert("Failed to create project.");
     }
@@ -81,6 +84,23 @@ export default function ProjectsPage() {
                 <><Folder size={16} className="text-blue-500"/> <span className="text-[var(--color-text)]">Internal Project</span></>
               )}
             </div>
+
+            <div className="flex items-center gap-2 mt-2 pt-4 border-t border-[var(--color-border)]">
+              <div className="flex -space-x-2 overflow-hidden">
+                {project.users && project.users.length > 0 ? project.users.slice(0, 3).map((u, i) => (
+                  <div key={i} className="inline-block h-6 w-6 rounded-full ring-2 ring-[var(--color-bg-card)] bg-[var(--color-primary)] text-white text-[10px] font-bold flex items-center justify-center" title={u.name}>
+                    {u.name.charAt(0).toUpperCase()}
+                  </div>
+                )) : (
+                  <span className="text-xs text-[var(--color-text-dim)]">No users shared</span>
+                )}
+                {project.users && project.users.length > 3 && (
+                  <div className="inline-block h-6 w-6 rounded-full ring-2 ring-[var(--color-bg-card)] bg-[var(--color-bg-elevated)] text-[var(--color-text-dim)] text-[10px] font-bold flex items-center justify-center">
+                    +{project.users.length - 3}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         ))}
         {projects.length === 0 && !loading && <div className="col-span-full text-center p-8 text-[var(--color-text-muted)] border border-dashed border-[var(--color-border)] rounded-2xl">No projects found. Create one above.</div>}
@@ -110,6 +130,25 @@ export default function ProjectsPage() {
                      <option value="">Internal Project (No Client)</option>
                      {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-[var(--color-text-dim)] mb-1 block">Share with Users</label>
+                  <div className="flex flex-col gap-2 max-h-40 overflow-y-auto border border-[var(--color-border)] p-2 rounded-xl">
+                    {users.map(u => (
+                      <label key={u.id} className="flex items-center gap-2 text-sm text-[var(--color-text)] p-1 hover:bg-white/5 rounded cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={formData.userIds.includes(u.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) setFormData({...formData, userIds: [...formData.userIds, u.id]});
+                            else setFormData({...formData, userIds: formData.userIds.filter(id => id !== u.id)});
+                          }}
+                          className="w-4 h-4 rounded text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                        />
+                        {u.name} ({u.role})
+                      </label>
+                    ))}
+                  </div>
                 </div>
                 <div className="flex justify-end gap-3 mt-4">
                  <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-[var(--color-text-dim)] hover:bg-white/5 rounded-xl font-medium">Cancel</button>
