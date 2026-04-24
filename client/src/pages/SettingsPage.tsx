@@ -8,7 +8,7 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('sites');
   
   const [sites, setSites] = useState<any[]>([]);
-  const [newSite, setNewSite] = useState({ name: '', lat: '', lng: '', radius: '100' });
+  const [newSite, setNewSite] = useState({ name: '', lat: '', lng: '', radius: '100', isHeadquarters: false });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -31,9 +31,10 @@ export default function SettingsPage() {
            name: newSite.name,
            lat: parseFloat(newSite.lat),
            lng: parseFloat(newSite.lng),
-           radius: parseInt(newSite.radius)
+           radius: parseInt(newSite.radius),
+           isHeadquarters: newSite.isHeadquarters
        });
-       setNewSite({ name: '', lat: '', lng: '', radius: '100' });
+       setNewSite({ name: '', lat: '', lng: '', radius: '100', isHeadquarters: false });
        fetchSites();
     } catch {
        alert("Failed to add site");
@@ -48,6 +49,16 @@ export default function SettingsPage() {
        fetchSites();
     } catch {
        alert("Failed to delete site");
+    }
+  };
+
+  const handleSetHQ = async (id: string) => {
+    if(user?.role !== 'ADMIN' && user?.role !== 'MANAGER') return alert("Unauthorized");
+    try {
+       await api.put(`/sites/${id}/hq`);
+       fetchSites();
+    } catch {
+       alert("Failed to set headquarters site");
     }
   };
 
@@ -90,6 +101,10 @@ export default function SettingsPage() {
                     <label className="text-xs font-bold text-[var(--color-text-dim)] uppercase tracking-wider mb-1 block">Geofence Radius (meters)</label>
                     <input type="number" required value={newSite.radius} onChange={e=>setNewSite({...newSite, radius: e.target.value})} className="w-full bg-[var(--color-bg-input)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-sm text-[var(--color-text)] focus:border-[var(--color-primary)] outline-none transition-colors" placeholder="100" />
                   </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <input type="checkbox" id="isHQ" checked={newSite.isHeadquarters} onChange={e=>setNewSite({...newSite, isHeadquarters: e.target.checked})} className="w-4 h-4 rounded text-[var(--color-primary)] focus:ring-[var(--color-primary)]" />
+                    <label htmlFor="isHQ" className="text-sm font-bold text-[var(--color-text)]">Mark as Headquarters</label>
+                  </div>
                   <button type="submit" disabled={loading || user?.role === 'FIELD_EMPLOYEE'} className="mt-2 w-full bg-[var(--color-primary)] text-white py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:-translate-y-0.5 transition-transform disabled:opacity-50">
                     <Plus size={18}/> Add Site
                   </button>
@@ -101,14 +116,25 @@ export default function SettingsPage() {
                <h2 className="font-bold text-lg text-[var(--color-text)] mb-4">Active Geofence Zones</h2>
                <div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-3">
                   {sites.length === 0 ? <p className="text-center text-[var(--color-text-dim)] py-8">No sites found.</p> : sites.map(site => (
-                     <div key={site.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]">
-                        <div>
-                           <p className="font-bold text-[var(--color-text)] flex items-center gap-2">{site.name} <span className="bg-green-500/10 text-green-500 text-[10px] px-2 py-0.5 rounded-full">{site.radius}m radius</span></p>
-                           <p className="text-xs text-[var(--color-text-dim)] font-mono mt-1">{site.lat}, {site.lng}</p>
-                        </div>
-                        <button onClick={()=>handleDeleteSite(site.id)} disabled={user?.role === 'FIELD_EMPLOYEE'} className="mt-3 sm:mt-0 p-2 text-red-500 hover:bg-red-500/10 rounded-xl transition-colors disabled:opacity-30">
-                           <Trash2 size={16}/>
-                        </button>
+                       <div key={site.id} className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl border ${site.isHeadquarters ? 'border-[var(--color-primary)]' : 'border-[var(--color-border)]'} bg-[var(--color-bg)]`}>
+                          <div>
+                             <p className="font-bold text-[var(--color-text)] flex items-center gap-2">
+                                {site.name} 
+                                <span className="bg-green-500/10 text-green-500 text-[10px] px-2 py-0.5 rounded-full">{site.radius}m radius</span>
+                                {site.isHeadquarters && <span className="bg-indigo-500/10 text-indigo-500 text-[10px] px-2 py-0.5 rounded-full font-bold">HQ</span>}
+                             </p>
+                             <p className="text-xs text-[var(--color-text-dim)] font-mono mt-1">{site.lat}, {site.lng}</p>
+                          </div>
+                          <div className="flex gap-2 mt-3 sm:mt-0">
+                            {!site.isHeadquarters && (
+                              <button onClick={()=>handleSetHQ(site.id)} disabled={user?.role === 'FIELD_EMPLOYEE'} className="px-3 py-1.5 text-xs font-bold text-[var(--color-text-dim)] hover:text-[var(--color-primary)] border border-[var(--color-border)] rounded-lg transition-colors disabled:opacity-30">
+                                Set HQ
+                              </button>
+                            )}
+                            <button onClick={()=>handleDeleteSite(site.id)} disabled={user?.role === 'FIELD_EMPLOYEE'} className="p-2 text-red-500 hover:bg-red-500/10 rounded-xl transition-colors disabled:opacity-30">
+                               <Trash2 size={16}/>
+                            </button>
+                          </div>
                      </div>
                   ))}
                </div>

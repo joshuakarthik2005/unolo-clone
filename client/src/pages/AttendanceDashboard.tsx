@@ -7,7 +7,8 @@ import { MapPin, Clock, Camera, CheckCircle } from 'lucide-react';
 export default function AttendanceDashboard() {
   const { user } = useAuth();
   const [todayRecord, setTodayRecord] = useState<AttendanceRecord | null>(null);
-  const [logs, setLogs] = useState<AttendanceRecord[]>([]);
+  const [myLogs, setMyLogs] = useState<AttendanceRecord[]>([]);
+  const [teamLogs, setTeamLogs] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
@@ -19,14 +20,25 @@ export default function AttendanceDashboard() {
   const fetchAttendance = async () => {
     try {
       setLoading(true);
-      const [dailyRes, logsRes, sitesRes] = await Promise.all([
+      const reqs = [
         api.get('/attendance/daily-status'),
-        api.get('/attendance/logs'),
+        api.get('/attendance/logs?type=me'),
         api.get('/sites')
-      ]);
-      setTodayRecord(dailyRes.data.data);
-      setLogs(logsRes.data.data);
-      setSites(sitesRes.data.data);
+      ];
+      
+      if (user?.role === 'ADMIN' || user?.role === 'MANAGER') {
+        reqs.push(api.get('/attendance/logs?type=team'));
+      }
+
+      const results = await Promise.all(reqs);
+      
+      setTodayRecord(results[0].data.data);
+      setMyLogs(results[1].data.data);
+      setSites(results[2].data.data);
+      
+      if (results[3]) {
+        setTeamLogs(results[3].data.data);
+      }
     } catch (err) {
       console.error("Failed to load attendance", err);
     } finally {
@@ -89,10 +101,9 @@ export default function AttendanceDashboard() {
         </div>
       )}
 
-      {/* Field Employee Action Panel */}
-      {user?.role === 'FIELD_EMPLOYEE' && (
-        <div className="bg-[var(--color-bg-card)] p-6 rounded-2xl border border-[var(--color-border)] shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+      {/* Action Panel */}
+      <div className="bg-[var(--color-bg-card)] p-6 rounded-2xl border border-[var(--color-border)] shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             
             {/* Status Visuals */}
             <div className="flex items-center gap-6">
@@ -155,14 +166,14 @@ export default function AttendanceDashboard() {
             </div>
           </div>
         </div>
-      )}
 
-      {/* Historical Monthly Logs */}
+
+{/* My Monthly Logs */}
       <div className="bg-[var(--color-bg-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden shadow-sm flex-1">
         <div className="px-6 py-4 border-b border-[var(--color-border)]">
-          <h2 className="font-bold text-[var(--color-text)] text-lg">Monthly Records</h2>
+          <h2 className="font-bold text-[var(--color-text)] text-lg">My Monthly Records</h2>
         </div>
-        <div className="w-full overflow-x-auto min-h-[300px]">
+        <div className="w-full overflow-x-auto min-h-[150px]">
           {loading ? (
             <div className="p-8 text-center text-[var(--color-text-muted)]">Loading log...</div>
           ) : (
@@ -170,7 +181,6 @@ export default function AttendanceDashboard() {
               <thead>
                 <tr className="bg-[var(--color-bg-elevated)] text-[var(--color-text-dim)] uppercase text-xs tracking-wider border-b border-[var(--color-border)]">
                   <th className="px-6 py-4 font-medium">Date</th>
-                  {['ADMIN', 'MANAGER'].includes(user?.role || '') && <th className="px-6 py-4 font-medium">Employee</th>}
                   <th className="px-6 py-4 font-medium">Status</th>
                   <th className="px-6 py-4 font-medium">Punch In</th>
                   <th className="px-6 py-4 font-medium">Punch Out</th>
@@ -178,16 +188,11 @@ export default function AttendanceDashboard() {
                 </tr>
               </thead>
               <tbody className="text-sm">
-                {logs.length > 0 ? logs.map(log => (
+                {myLogs.length > 0 ? myLogs.map(log => (
                   <tr key={log.id} className="border-b border-[var(--color-border)] hover:bg-white/5 transition-colors">
                     <td className="px-6 py-4 text-[var(--color-text)] font-medium">
                       {new Date(log.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric'})}
                     </td>
-                    {['ADMIN', 'MANAGER'].includes(user?.role || '') && (
-                      <td className="px-6 py-4 text-[var(--color-text)] font-medium">
-                        {log.user?.name || '--'}
-                      </td>
-                    )}
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 rounded-md text-xs font-bold border
                         ${log.status === 'PRESENT' ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20' : ''}
@@ -218,6 +223,68 @@ export default function AttendanceDashboard() {
           )}
         </div>
       </div>
+
+      {/* Team Monthly Logs */}
+      {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+        <div className="bg-[var(--color-bg-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden shadow-sm flex-1">
+          <div className="px-6 py-4 border-b border-[var(--color-border)]">
+            <h2 className="font-bold text-[var(--color-text)] text-lg">{user?.role === 'ADMIN' ? 'Org-Wide Attendance' : 'Team Attendance'}</h2>
+          </div>
+          <div className="w-full overflow-x-auto min-h-[250px]">
+            {loading ? (
+              <div className="p-8 text-center text-[var(--color-text-muted)]">Loading team log...</div>
+            ) : (
+              <table className="w-full text-left border-collapse min-w-[640px]">
+                <thead>
+                  <tr className="bg-[var(--color-bg-elevated)] text-[var(--color-text-dim)] uppercase text-xs tracking-wider border-b border-[var(--color-border)]">
+                    <th className="px-6 py-4 font-medium">Date</th>
+                    <th className="px-6 py-4 font-medium">Employee</th>
+                    <th className="px-6 py-4 font-medium">Status</th>
+                    <th className="px-6 py-4 font-medium">Punch In</th>
+                    <th className="px-6 py-4 font-medium">Punch Out</th>
+                    <th className="px-6 py-4 font-medium">Total Hours</th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm">
+                  {teamLogs.length > 0 ? teamLogs.map(log => (
+                    <tr key={log.id} className="border-b border-[var(--color-border)] hover:bg-white/5 transition-colors">
+                      <td className="px-6 py-4 text-[var(--color-text)] font-medium">
+                        {new Date(log.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric'})}
+                      </td>
+                      <td className="px-6 py-4 text-[var(--color-text)] font-medium">
+                        {log.user?.name || '--'}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 rounded-md text-xs font-bold border
+                          ${log.status === 'PRESENT' ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] border-[var(--color-success)]/20' : ''}
+                          ${log.status === 'LATE' ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' : ''}
+                          ${log.status === 'ABSENT' ? 'bg-[var(--color-error)]/10 text-[var(--color-error)] border-[var(--color-error)]/20' : ''}
+                          ${!['PRESENT', 'LATE', 'ABSENT'].includes(log.status) ? 'bg-gray-500/10 text-gray-500 border-gray-500/20' : ''}
+                        `}>
+                          {log.status === 'LATE' ? "LATE" : log.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-[var(--color-text-dim)]">
+                        {new Date(log.punchInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit'})}
+                      </td>
+                      <td className="px-6 py-4 text-[var(--color-text-dim)]">
+                        {log.punchOutTime ? new Date(log.punchOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit'}) : '--'}
+                      </td>
+                      <td className="px-6 py-4 text-[var(--color-text-dim)]">
+                        {log.totalHours ? `${log.totalHours.toFixed(1)} hrs` : '--'}
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-8 text-center text-[var(--color-text-muted)]">No team records found.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
