@@ -250,7 +250,7 @@ export default function ProjectsPage() {
               <form onSubmit={handleAddMember} className="flex gap-2 mb-6">
                 <select 
                   required
-                  className="flex-1 bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-xl px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--color-primary)]"
+                  className="flex-1 min-w-0 bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-xl px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--color-primary)] truncate"
                   value={shareUserId}
                   onChange={e => setShareUserId(e.target.value)}
                 >
@@ -260,14 +260,14 @@ export default function ProjectsPage() {
                   ))}
                 </select>
                 <select 
-                  className="w-28 bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-xl px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--color-primary)]"
+                  className="w-28 shrink-0 bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-xl px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--color-primary)]"
                   value={shareRole}
                   onChange={e => setShareRole(e.target.value as any)}
                 >
                   <option value="VIEWER">Viewer</option>
                   <option value="EDITOR">Editor</option>
                 </select>
-                <button type="submit" className="bg-[var(--color-primary)] text-white px-4 py-2 rounded-xl font-medium shadow hover:-translate-y-0.5 active:scale-95 transition-all text-sm">Add</button>
+                <button type="submit" className="shrink-0 bg-[var(--color-primary)] text-white px-4 py-2 rounded-xl font-medium shadow hover:-translate-y-0.5 active:scale-95 transition-all text-sm">Add</button>
               </form>
 
               <h3 className="text-sm font-bold text-[var(--color-text)] mb-2 uppercase tracking-wider">Current Members</h3>
