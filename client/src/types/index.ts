@@ -88,14 +88,24 @@ export interface Client {
   phone?: string;
 }
 
+export interface ProjectMember {
+  id: string;
+  projectId: string;
+  userId: string;
+  role: 'OWNER' | 'EDITOR' | 'VIEWER';
+  addedAt: string;
+  user?: { id: string; name: string; profilePhoto?: string; role: Role };
+}
+
 export interface Project {
   id: string;
   name: string;
   description?: string;
   clientId?: string;
   client?: Client;
-  users?: { id: string; name: string; profilePhoto?: string }[];
+  members?: ProjectMember[];
   status: 'ACTIVE' | 'COMPLETED' | 'ON_HOLD';
+  visibility: 'PUBLIC' | 'PRIVATE';
   createdAt: string;
   updatedAt: string;
 }

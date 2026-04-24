@@ -94,6 +94,7 @@ model User {
   createdTasks  Task[]       @relation("ManagerTasks")
 
   expenseClaims ExpenseClaim[]
+  projectMemberships ProjectMember[]
 
   @@map("users")
 }
@@ -284,10 +285,12 @@ model Project {
   client      Client?      @relation(fields: [clientId], references: [id])
   clientId    String?      @map("client_id")
   status      ProjectStatus @default(ACTIVE)
+  visibility  ProjectVisibility @default(PRIVATE)
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
 
   tasks       Task[]
+  members     ProjectMember[]
 
   @@map("projects")
 }
@@ -296,6 +299,30 @@ enum ProjectStatus {
   ACTIVE
   COMPLETED
   ON_HOLD
+}
+
+enum ProjectVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum ProjectRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+model ProjectMember {
+  id        String   @id @default(uuid())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String   @map("project_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @map("user_id")
+  role      ProjectRole @default(VIEWER)
+  addedAt   DateTime @default(now()) @map("added_at")
+
+  @@unique([projectId, userId])
+  @@map("project_members")
 }
 
 model Task {
