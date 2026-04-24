@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../lib/api';
-import type { Task, Client } from '../types';
+import type { Task, Client, Project } from '../types';
 import { useNavigate } from 'react-router-dom';
-import { Plus, List, Grip, Calendar as CalIcon, MapPin } from 'lucide-react';
+import { Plus, List, Grip, Calendar as CalIcon, MapPin, Briefcase } from 'lucide-react';
 
 export default function TasksPage() {
   const { user } = useAuth();
@@ -15,9 +15,10 @@ export default function TasksPage() {
   // Modal State
   const [showModal, setShowModal] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [formData, setFormData] = useState({
-    title: '', assignedToId: '', clientId: '', priority: 'MEDIUM', scheduledDate: '', notes: ''
+    title: '', assignedToId: '', clientId: '', projectId: '', priority: 'MEDIUM', scheduledDate: '', notes: ''
   });
 
   const fetchData = async () => {
@@ -32,12 +33,14 @@ export default function TasksPage() {
   useEffect(() => {
     fetchData();
     if (['ADMIN', 'MANAGER'].includes(user?.role || '')) {
-      Promise.all([api.get('/clients'), api.get('/employees')]).then(([c, e]) => {
+      Promise.all([api.get('/clients'), api.get('/employees'), api.get('/projects')]).then(([c, e, p]) => {
          setClients(c.data?.data || []);
          setEmployees(e.data?.data?.employees || []);
+         setProjects(p.data?.data || []);
       }).catch(() => {
          setClients([]);
          setEmployees([]);
+         setProjects([]);
       });
     } else {
       setView('list'); // Default to list for field employees
@@ -50,7 +53,7 @@ export default function TasksPage() {
       await api.post('/tasks', formData);
       setShowModal(false);
       fetchData();
-      setFormData({ title: '', assignedToId: '', clientId: '', priority: 'MEDIUM', scheduledDate: '', notes: '' });
+      setFormData({ title: '', assignedToId: '', clientId: '', projectId: '', priority: 'MEDIUM', scheduledDate: '', notes: '' });
     } catch {
       alert("Failed to create task");
     }
@@ -208,14 +211,21 @@ export default function TasksPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-[var(--color-text-dim)] mb-1 block">Location / Client</label>
-                    <select required className="w-full bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 outline-none focus:border-[var(--color-primary)] text-[var(--color-text)]" value={formData.clientId} onChange={e=>setFormData({...formData, clientId: e.target.value})}>
-                       <option value="">Select Client</option>
-                       {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-                  </div>
-               </div>
-               <div className="grid grid-cols-2 gap-4">
+                      <label className="text-xs font-medium text-[var(--color-text-dim)] mb-1 block">Project (Optional)</label>
+                      <select className="w-full bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 outline-none focus:border-[var(--color-primary)] text-[var(--color-text)]" value={formData.projectId} onChange={e=>setFormData({...formData, projectId: e.target.value})}>
+                         <option value="">No Project</option>
+                         {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                      </select>
+                    </div>
+                 </div>
+                 <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-medium text-[var(--color-text-dim)] mb-1 block">Location / Client (Optional)</label>
+                      <select className="w-full bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 outline-none focus:border-[var(--color-primary)] text-[var(--color-text)]" value={formData.clientId} onChange={e=>setFormData({...formData, clientId: e.target.value})}>
+                         <option value="">Internal / No Client</option>
+                         {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      </select>
+                    </div>
                   <div>
                     <label className="text-xs font-medium text-[var(--color-text-dim)] mb-1 block">Scheduled Date</label>
                     <input type="date" required className="w-full bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-xl px-4 py-2.5 outline-none focus:border-[var(--color-primary)] text-[var(--color-text)]" 

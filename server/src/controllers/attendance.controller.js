@@ -81,6 +81,9 @@ export const punchIn = async (req, res) => {
     res.json({ success: true, data: record, message: `Punched in successfully as ${status}.` });
 
   } catch (error) {
+    if (error.code === 'P2002') {
+       return res.status(400).json({ success: false, message: "Already punched in for today." });
+    }
     console.error("Punch In Error:", error);
     res.status(500).json({ success: false, message: "Punch in failed." });
   }

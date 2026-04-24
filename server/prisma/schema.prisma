@@ -127,6 +127,7 @@ model Organization {
   sites       Site[]
   leaveTypes  LeaveType[]
   clients     Client[]
+  projects    Project[]
   tasks       Task[]
   expenseClaims ExpenseClaim[]
   vehicleRates  VehicleRate[]
@@ -269,8 +270,32 @@ model Client {
   updatedAt     DateTime     @updatedAt @map("updated_at")
 
   tasks         Task[]
+  projects      Project[]
 
   @@map("clients")
+}
+
+model Project {
+  id          String       @id @default(uuid())
+  org         Organization @relation(fields: [orgId], references: [id])
+  orgId       String       @map("org_id")
+  name        String
+  description String?
+  client      Client?      @relation(fields: [clientId], references: [id])
+  clientId    String?      @map("client_id")
+  status      ProjectStatus @default(ACTIVE)
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  tasks       Task[]
+
+  @@map("projects")
+}
+
+enum ProjectStatus {
+  ACTIVE
+  COMPLETED
+  ON_HOLD
 }
 
 model Task {
@@ -285,8 +310,11 @@ model Task {
   assignedBy    User         @relation("ManagerTasks", fields: [assignedById], references: [id])
   assignedById  String       @map("assigned_by_id")
 
-  client        Client       @relation(fields: [clientId], references: [id])
-  clientId      String       @map("client_id")
+  client        Client?      @relation(fields: [clientId], references: [id])
+  clientId      String?      @map("client_id")
+
+  project       Project?     @relation(fields: [projectId], references: [id])
+  projectId     String?      @map("project_id")
 
   status        TaskStatus   @default(PENDING)
   priority      Priority     @default(MEDIUM)

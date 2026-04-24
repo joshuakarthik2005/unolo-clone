@@ -24,6 +24,7 @@ export const getTasks = async (req, res) => {
       where: { orgId: req.user.orgId },
       include: {
         client: true,
+        project: true,
         assignedTo: { select: { id: true, name: true } }
       },
       orderBy: { scheduledDate: 'asc' }
@@ -44,7 +45,7 @@ export const getTaskById = async (req, res) => {
   try {
     const task = await prisma.task.findUnique({
       where: { id: req.params.id },
-      include: { client: true, photos: true, forms: true, assignedTo: { select: { id: true, name: true }} }
+      include: { client: true, project: true, photos: true, forms: true, assignedTo: { select: { id: true, name: true }} }
     });
 
     if (!task || task.orgId !== req.user.orgId) {
@@ -59,7 +60,7 @@ export const getTaskById = async (req, res) => {
 
 export const createTask = async (req, res) => {
   try {
-    const { title, assignedToId, clientId, priority, scheduledDate, notes } = req.body;
+    const { title, assignedToId, clientId, projectId, priority, scheduledDate, notes } = req.body;
 
     const task = await prisma.task.create({
       data: {
@@ -67,13 +68,14 @@ export const createTask = async (req, res) => {
         orgId: req.user.orgId,
         assignedToId,
         assignedById: req.user.id,
-        clientId,
+        clientId: clientId || null,
+        projectId: projectId || null,
         priority: priority || 'MEDIUM',
         scheduledDate: new Date(scheduledDate),
         notes,
         geoRadius: 100
       },
-      include: { client: true, assignedTo: { select: { name: true }} }
+      include: { client: true, project: true, assignedTo: { select: { name: true }} }
     });
 
     res.json({ success: true, data: task, message: "Task assigned." });

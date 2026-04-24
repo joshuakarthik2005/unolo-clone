@@ -9,6 +9,7 @@ export default function AttendanceDashboard() {
   const [todayRecord, setTodayRecord] = useState<AttendanceRecord | null>(null);
   const [logs, setLogs] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
   const [sites, setSites] = useState<Site[]>([]);
 
@@ -38,10 +39,13 @@ export default function AttendanceDashboard() {
   }, []);
 
   const handlePunch = async (type: 'in' | 'out') => {
+    if (processing) return;
     setError('');
+    setProcessing(true);
 
     if (!navigator.geolocation) {
       setError('Geolocation is not supported by your browser.');
+      setProcessing(false);
       return;
     }
 
@@ -59,10 +63,13 @@ export default function AttendanceDashboard() {
           fetchAttendance(); // Refresh statuses
         } catch (err: any) {
           setError(err.response?.data?.message || `Failed to punch ${type}.`);
+        } finally {
+          setProcessing(false);
         }
       },
       () => {
         setError(`Location access denied. Please allow location to punch ${type}.`);
+        setProcessing(false);
       }
     );
   };
@@ -124,17 +131,19 @@ export default function AttendanceDashboard() {
               {!todayRecord ? (
                 <button
                   onClick={() => handlePunch('in')}
-                  className="w-full relative overflow-hidden bg-[var(--color-success)] text-white py-4 px-6 rounded-xl font-bold flex flex-col items-center justify-center shadow-lg hover:-translate-y-1 transition-all active:scale-95 group"
+                  disabled={processing}
+                  className={`w-full relative overflow-hidden bg-[var(--color-success)] text-white py-4 px-6 rounded-xl font-bold flex flex-col items-center justify-center shadow-lg transition-all ${processing ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-1 active:scale-95 group'}`}
                 >
-                  <span className="flex items-center gap-2 text-lg"><Clock size={20} /> PUNCH IN NOW</span>
+                  <span className="flex items-center gap-2 text-lg"><Clock size={20} /> {processing ? 'PUNCHING IN...' : 'PUNCH IN NOW'}</span>
                   <span className="text-xs font-normal opacity-80 mt-1">Requires Geolocation & Selfie</span>
                 </button>
               ) : !todayRecord.punchOutTime ? (
                 <button
                   onClick={() => handlePunch('out')}
-                  className="w-full relative overflow-hidden bg-[var(--color-error)] text-white py-4 px-6 rounded-xl font-bold flex flex-col items-center justify-center shadow-lg hover:-translate-y-1 transition-all active:scale-95"
+                  disabled={processing}
+                  className={`w-full relative overflow-hidden bg-[var(--color-error)] text-white py-4 px-6 rounded-xl font-bold flex flex-col items-center justify-center shadow-lg transition-all ${processing ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-1 active:scale-95 group'}`}
                 >
-                  <span className="flex items-center gap-2 text-lg"><Clock size={20} /> PUNCH OUT</span>
+                  <span className="flex items-center gap-2 text-lg"><Clock size={20} /> {processing ? 'PUNCHING OUT...' : 'PUNCH OUT'}</span>
                   <span className="text-xs font-normal opacity-80 mt-1">Ends your day log</span>
                 </button>
               ) : (

@@ -88,12 +88,24 @@ export interface Client {
   phone?: string;
 }
 
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  clientId?: string;
+  client?: Client;
+  status: 'ACTIVE' | 'COMPLETED' | 'ON_HOLD';
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Task {
   id: string;
   title: string;
   assignedToId: string;
   assignedById: string;
-  clientId: string;
+  clientId?: string;
+  projectId?: string;
   status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'DELAYED' | 'CANCELLED';
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
   scheduledDate: string;
@@ -102,6 +114,7 @@ export interface Task {
   notes?: string;
   geoRadius: number;
   client?: Client;
+  project?: Project;
   assignedTo?: { id: string, name: string };
 }
 
