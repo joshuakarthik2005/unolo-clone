@@ -20,12 +20,14 @@ import {
   ChevronDown,
   Briefcase,
   Building,
+  FolderOpen,
   Receipt
 } from 'lucide-react';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/dashboard/tasks', icon: Briefcase, label: 'Tasks' },
+  { to: '/dashboard/projects', icon: FolderOpen, label: 'Projects' },
   { to: '/dashboard/clients', icon: Building, label: 'Clients' },
   { to: '/dashboard/expenses', icon: Receipt, label: 'Expenses' },
   { to: '/dashboard/employees', icon: Users, label: 'Employees' },

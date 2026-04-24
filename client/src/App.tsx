@@ -15,6 +15,7 @@ import TasksPage from './pages/TasksPage';
 import TaskDetail from './pages/TaskDetail';
 import ExpensesPage from './pages/ExpensesPage';
 import ClientsPage from './pages/ClientsPage';
+import ProjectsPage from './pages/ProjectsPage';
 import PlaceholderPage from './pages/PlaceholderPage';
 import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
@@ -42,8 +43,7 @@ export default function App() {
               <Route path="/dashboard/tasks" element={<TasksPage />} />
               <Route path="/dashboard/tasks/:id" element={<TaskDetail />} />
               <Route path="/dashboard/expenses" element={<ExpensesPage />} />
-              <Route path="/dashboard/clients" element={<ClientsPage />} />
-              <Route path="/dashboard/tracking" element={<LiveTrackingPage />} />
+              <Route path="/dashboard/clients" element={<ClientsPage />} />                <Route path="/dashboard/projects" element={<ProjectsPage />} />              <Route path="/dashboard/tracking" element={<LiveTrackingPage />} />
               <Route path="/dashboard/shifts" element={<PlaceholderPage title="Shifts" />} />
               <Route path="/dashboard/reports" element={<ReportsPage />} />
               <Route path="/dashboard/settings" element={<SettingsPage />} />
