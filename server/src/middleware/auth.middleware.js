@@ -7,6 +7,13 @@ export const authenticateToken = (req, res, next) => {
   const token = req.cookies?.accessToken;
 
   if (!token) {
+    if (req.cookies?.refreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Token expired.",
+        code: "TOKEN_EXPIRED",
+      });
+    }
     return res.status(401).json({
       success: false,
       message: "Access denied. No token provided.",
