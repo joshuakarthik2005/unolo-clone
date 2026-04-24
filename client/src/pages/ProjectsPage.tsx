@@ -24,14 +24,17 @@ export default function ProjectsPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [pRes, cRes, uRes] = await Promise.all([
-        api.get('/projects'),
-        api.get('/clients'),
-        api.get('/employees')
-      ]);
+      const pRes = await api.get('/projects');
       setProjects(pRes.data.data);
-      setClients(cRes.data.data);
-      setUsers(uRes.data.data.employees || []);
+
+      if (['ADMIN', 'MANAGER'].includes(user?.role || '')) {
+        const [cRes, uRes] = await Promise.all([
+          api.get('/clients'),
+          api.get('/employees')
+        ]);
+        setClients(cRes.data.data);
+        setUsers(uRes.data.data.employees || []);
+      }
     } catch (err) { 
       console.error(err);
     }
