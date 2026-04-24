@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../lib/api';
 import type { Task, Client, Project } from '../types';
 import { useNavigate } from 'react-router-dom';
-import { Plus, List, Grip, Calendar as CalIcon, MapPin, Briefcase } from 'lucide-react';
+import { Plus, List, Grip, Calendar as CalIcon, MapPin } from 'lucide-react';
 
 export default function TasksPage() {
   const { user } = useAuth();
